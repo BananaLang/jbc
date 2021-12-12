@@ -10,7 +10,7 @@ import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-public class JBC {
+public class CompilerCLI {
     public static void main(String[] args) throws IOException {
         ArgumentParser parser = ArgumentParsers.newFor("jbc").build()
             .defaultHelp(true)

@@ -71,7 +71,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>io.github.bananalang.jbc.JBC</mainClass>
+              <mainClass>io.github.bananalang.jbc.CompilerCLI</mainClass>
             </manifest>
           </archive>
         </configuration>
