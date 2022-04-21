@@ -10,6 +10,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import io.github.bananalang.JavaBananaConstants;
+import io.github.bananalang.compile.CompileOptions;
 import io.github.bananalang.compile.BananaCompiler;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -24,18 +25,20 @@ public class CompilerCLI {
               .help("The file(s) to compile")
               .type(File.class);
         Namespace ns = parser.parseArgsOrFail(args);
+        CompileOptions options = new CompileOptions();
         for (File file : ns.<File>getList("file")) {
-            String moduleName = file.getName();
-            moduleName = moduleName.substring(0, moduleName.lastIndexOf('.'));
+            options.sourceFileName(file.getName())
+                .defaultModuleName()
+                .defaultClassName();
             if (JavaBananaConstants.DEBUG) {
-                System.err.println("Compiling " + moduleName);
+                System.err.println("Compiling " + options.moduleName());
             }
-            byte[] bytecode = BananaCompiler.compileFile(file).toByteArray();
+            byte[] bytecode = BananaCompiler.compileFile(file, options).toByteArray();
             if (JavaBananaConstants.DEBUG) {
-                System.err.println("Finished compiling " + moduleName);
+                System.err.println("Finished compiling " + options.moduleName());
                 CheckClassAdapter.verify(new ClassReader(bytecode), true, new PrintWriter(System.err));
             }
-            try (OutputStream out = new FileOutputStream(new File(file.getParentFile(), "GiveMeANameTODO.class"))) {
+            try (OutputStream out = new FileOutputStream(new File(file.getParentFile(), options.classFileName()))) {
                 out.write(bytecode);
             }
         }
