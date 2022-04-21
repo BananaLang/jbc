@@ -8,7 +8,7 @@
             "type": "java",
             "name": "Launch JBC",
             "request": "launch",
-            "mainClass": "io.github.bananalang.jbc.JBC",
+            "mainClass": "io.github.bananalang.jbc.CompilerCLI",
             "projectName": "jbc",
             "args": ["example.ba"],
             "vmArgs": ["-Dbananalang.debug=true"]

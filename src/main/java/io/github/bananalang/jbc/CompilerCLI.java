@@ -1,10 +1,15 @@
 package io.github.bananalang.jbc;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 import io.github.bananalang.JavaBananaConstants;
-import io.github.bananalang.bytecode.ByteCodeFile;
 import io.github.bananalang.compile.BananaCompiler;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
@@ -25,12 +30,14 @@ public class CompilerCLI {
             if (JavaBananaConstants.DEBUG) {
                 System.err.println("Compiling " + moduleName);
             }
-            ByteCodeFile bbc = BananaCompiler.compileFile(file);
+            byte[] bytecode = BananaCompiler.compileFile(file).toByteArray();
             if (JavaBananaConstants.DEBUG) {
                 System.err.println("Finished compiling " + moduleName);
-                bbc.disassemble(System.err);
+                CheckClassAdapter.verify(new ClassReader(bytecode), true, new PrintWriter(System.err));
             }
-            bbc.write(new File(file.getParentFile(), moduleName + ".bbc"));
+            try (OutputStream out = new FileOutputStream(new File(file.getParentFile(), "GiveMeANameTODO.class"))) {
+                out.write(bytecode);
+            }
         }
     }
 }
