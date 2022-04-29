@@ -10,7 +10,7 @@
             "request": "launch",
             "mainClass": "io.github.bananalang.jbc.CompilerCLI",
             "projectName": "jbc",
-            "args": ["example.ba"],
+            "args": ["run", "example.ba"],
             "vmArgs": ["-Dbananalang.debug=true"]
         }
     ]
