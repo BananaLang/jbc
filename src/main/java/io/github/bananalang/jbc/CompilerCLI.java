@@ -46,7 +46,7 @@ public class CompilerCLI {
         }),
         RUN(ns -> {
             CompileOptions options = new CompileOptions();
-            File file = ns.<File>get("file");
+            File file = ns.get("file");
             options.sourceFileName(file.getName())
                 .defaultModuleName()
                 .defaultClassName();
