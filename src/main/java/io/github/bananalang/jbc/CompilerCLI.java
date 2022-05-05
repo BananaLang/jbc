@@ -12,6 +12,8 @@ import org.objectweb.asm.util.CheckClassAdapter;
 import io.github.bananalang.JavaBananaConstants;
 import io.github.bananalang.compile.BananaCompiler;
 import io.github.bananalang.compile.CompileOptions;
+import io.github.bananalang.compilecommon.problems.GenericCompilationFailureException;
+import io.github.bananalang.compilecommon.problems.ProblemCollector;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.Namespace;
@@ -27,6 +29,7 @@ public class CompilerCLI {
     private static enum Action {
         COMPILE(ns -> {
             CompileOptions options = new CompileOptions();
+            ProblemCollector problemCollector = new ProblemCollector();
             for (File file : ns.<File>getList("file")) {
                 options.sourceFileName(file.getName())
                     .defaultModuleName()
@@ -34,7 +37,12 @@ public class CompilerCLI {
                 if (JavaBananaConstants.DEBUG) {
                     System.err.println("Compiling " + options.moduleName());
                 }
-                byte[] bytecode = BananaCompiler.compileFile(file, options).toByteArray();
+                byte[] bytecode;
+                try {
+                    bytecode = BananaCompiler.compileFile(file, options, problemCollector).toByteArray();
+                } catch (GenericCompilationFailureException e) {
+                    continue;
+                }
                 if (JavaBananaConstants.DEBUG) {
                     System.err.println("Finished compiling " + options.moduleName());
                     CheckClassAdapter.verify(new ClassReader(bytecode), true, new PrintWriter(System.err));
@@ -43,9 +51,18 @@ public class CompilerCLI {
                     out.write(bytecode);
                 }
             }
+            System.out.println(
+                SUPPORT_ANSI
+                    ? problemCollector.ansiFormattedString()
+                    : problemCollector.toString()
+            );
+            if (problemCollector.isFailing()) {
+                System.exit(1);
+            }
         }),
         RUN(ns -> {
             CompileOptions options = new CompileOptions();
+            ProblemCollector problemCollector = new ProblemCollector();
             File file = ns.get("file");
             options.sourceFileName(file.getName())
                 .defaultModuleName()
@@ -53,7 +70,26 @@ public class CompilerCLI {
             if (JavaBananaConstants.DEBUG) {
                 System.err.println("Compiling " + options.moduleName());
             }
-            byte[] bytecode = BananaCompiler.compileFile(file, options).toByteArray();
+            byte[] bytecode;
+            try {
+                bytecode = BananaCompiler.compileFile(file, options, problemCollector).toByteArray();
+            } catch (GenericCompilationFailureException e) {
+                bytecode = null;
+            }
+            if (problemCollector.hasOutput()) {
+                System.out.println(
+                    SUPPORT_ANSI
+                        ? problemCollector.ansiFormattedString()
+                        : problemCollector.toString()
+                );
+                if (problemCollector.isFailing()) {
+                    System.exit(1);
+                }
+            }
+            if (bytecode == null) {
+                // Compile error
+                return;
+            }
             if (JavaBananaConstants.DEBUG) {
                 System.err.println("Finished compiling " + options.moduleName());
                 CheckClassAdapter.verify(new ClassReader(bytecode), true, new PrintWriter(System.err));
@@ -83,6 +119,8 @@ public class CompilerCLI {
             this.handler = handler;
         }
     }
+
+    private static final boolean SUPPORT_ANSI = System.console() != null;
 
     public static void main(String[] args) throws Throwable {
         ArgumentParser parser = ArgumentParsers.newFor("jbc").build()
